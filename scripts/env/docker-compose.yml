@@ -1,0 +1,54 @@
+version: "3.4"
+
+services:
+  # op-connect-api only accesible from inside of docker network
+  # Circle CI does not allow you to expose ports from docker to host
+  node-12:
+    build:
+      context: .
+    entrypoint: >
+      bash -c "cd /home
+      && npm i --silent @1password/connect >/dev/null 2>&1
+      && /home/wait-fo-it.sh op-connect-api:8080 --timeout=360 --strict >/dev/null 2>&1
+      && sleep 10
+      && node 1password.js"
+    environment:
+      CI: ${CI}
+      OP_VAULT: ${OP_VAULT}
+      OP_TOKEN: ${OP_TOKEN}
+      OP_SHARED_DOCUMENT: ${OP_SHARED_DOCUMENT}
+      OP_TENANT_DOCUMENT: ${OP_TENANT_DOCUMENT}
+    depends_on:
+      - op-connect-api
+      - op-connect-sync
+    #  Circle CI also blocks your volume mounts
+    # volumes:
+    #   - ./1password.js:/home/1password.js
+    #   - ./wait-fo-it.sh:/home/wait-fo-it.sh
+
+  op-connect-api:
+    image: 1password/connect-api:latest
+    entrypoint: >
+      bash -c "echo ${OP_AUTOMATION_CREDENTIALS} | base64 -d > /home/opuser/.op/1password-credentials.json
+      && connect-api"
+    environment:
+      OP_AUTOMATION_CREDENTIALS: ${OP_AUTOMATION_CREDENTIALS}
+    ports:
+      - "8080:8080"
+    volumes:
+      - "data:/home/opuser/.op/data"
+
+  op-connect-sync:
+    image: 1password/connect-sync:latest
+    entrypoint: >
+      bash -c "echo ${OP_AUTOMATION_CREDENTIALS} | base64 -d > /home/opuser/.op/1password-credentials.json
+      && connect-sync"
+    environment:
+      OP_AUTOMATION_CREDENTIALS: ${OP_AUTOMATION_CREDENTIALS}
+    ports:
+      - "8081:8080"
+    volumes:
+      - "data:/home/opuser/.op/data"
+
+volumes:
+  data:
