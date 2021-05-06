@@ -1,5 +1,7 @@
 # Local OP CLI and CI OP Secret Automation Setup
 
+Configuration management system that utilizes [One Password CLI](http://squarespace.com/ "One Password CLI") for local development and [Secret Automation](https://1password.com/secrets/ "Secret Automation") for CI
+
 - Single entry point for both tools
 - Run secret automation in CI without hosting an external server
 - Multi environment and multi tenanted approach to configuration
